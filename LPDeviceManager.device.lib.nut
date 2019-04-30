@@ -39,6 +39,8 @@ const LP_DEFAULT_TIMEOUT_SEC = 10;
  */
 class LPDeviceManager {
 
+    static VERSION = "0.1.0";
+
     /** @member {integer} - the stored wakeup reason */
     _wakeupReason = null;
 

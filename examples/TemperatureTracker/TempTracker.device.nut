@@ -42,7 +42,7 @@
 #require "HTS221.device.lib.nut:2.0.1"
 #require "ConnectionManager.lib.nut:3.1.0"
 #require "MessageManager.lib.nut:2.3.0"
-@include __PATH__ + "/../../LPDeviceManager.device.lib.nut"
+#require "LPDeviceManager.device.lib.nut:0.1.0"
 
 // Wake up period for the tracker to report data
 const WAKE_UP_PERIOD_SEC        = 15;

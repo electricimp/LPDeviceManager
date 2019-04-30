@@ -31,8 +31,7 @@
  */
 
 #require "ConnectionManager.lib.nut:3.1.0"
-
-@include __PATH__  + "/../LPDeviceManager.device.lib.nut"
+#require "LPDeviceManager.device.lib.nut:0.1.0"
 
 function defaultOnWake(reason) {
     cm.log("defaultOnWake");
@@ -79,4 +78,3 @@ lp.onConnect(function() {
 lp.onDisconnect(function(expected) {
     cm.log("onDisconnect: expected = " + expected);
 })
-
