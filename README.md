@@ -176,3 +176,7 @@ None.
 #### Return Value ####
 
 String, description of the wake up reason.
+
+## License ##
+
+The Scheduler library is licensed under the [MIT License](./LICENSE).
