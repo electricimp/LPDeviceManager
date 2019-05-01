@@ -25,7 +25,7 @@ This method returns a new LPDeviceManager instance.
 | *wakeReasonCallbacks* | Table | No | A table of optional wake reasons callbacks. See below. Default is an empty table. |
 | *isDebug* | Boolean | No | Controls the debug output of the library. |
 
-##### Wake Reason Callbacks #####
+#### Wake Reason Callbacks ####
 
 All keys are optional and values are callback functions.
 
@@ -37,6 +37,68 @@ All keys are optional and values are callback functions.
 | onInterrupt | Callback to be triggered on a wakeup pin, the callback takes no parameters |
 | onPowerRestored | Callback to be triggered when the imp is VBAT powered during a cold start, the callback takes no parameters |
 | defaultOnWake | Callback that catches all other wake reasons, takes wake reason constant as a parameter [see docs for constant description](https://developer.electricimp.com/api/hardware/wakereason) |
+
+#### Example ####
+
+```squirrel
+const MAX_WAKE_TIME = 60;
+const SLEEP_TIME    = 300;
+
+local SENSOR_I2C = hardware.i2cKL;
+SENSOR_I2C.configure(CLOCK_SPEED_400_KHZ);
+
+cm <- ConnectionManager({ "blinkupBehavior": CM_BLINK_ALWAYS });
+th <- HTS221(SENSOR_I2C);
+lpm <- null;
+
+// Wake up on timer flow
+function onScheduledWake() {
+    server.log("Wake reason: " + lpm.wakeReasonDesc());
+
+    // Set a limit on how long we are connected
+    // Note: Setting a fixed duration to sleep here means next connection
+    // will happen in calculated time + the time it takes to complete all
+    // tasks. 
+    lpm.doAsyncAndSleep(function(done) {
+        // Take an async temp reading
+        th.setMode(HTS221_MODE.ONE_SHOT);
+        th.read(function(res) {
+            if ("error" in res) {
+                // Log error
+                server.error("Temperature/Humidity reading error: " + res.error);
+            } else {
+                // Log reading
+                server.log("Temperature: " + res.temperature + "°C Humidity: " + res.humidity + "%");
+                // Go to sleep
+                done();
+            }
+        }.bindenv(this))
+    }.bindenv(this), SLEEP_TIME, MAX_WAKE_TIME);
+}
+
+// Wake up (not on timer) flow
+function onBoot(wakereason) {
+    server.log("Wake reason: " + wakereason);
+
+    // Set a limit on how long we are connected
+    // Note: Setting a fixed duration to sleep here means next connection
+    // will happen in calculated time + the time it takes to complete all
+    // tasks. 
+    lpm.doAsyncAndSleep(function(done) {
+        agent.on("restartACK", function(notUsed) {
+            done();
+        }.bindenv(this))
+        agent.send("restart", "Device restarted: " + wakereason);
+    }.bindenv(this), SLEEP_TIME, MAX_WAKE_TIME);
+}
+
+handlers <- {
+    "onTimer"       : onScheduledWake.bindenv(this),
+    "defaultOnWake" : onBoot.bindenv(this)
+}
+
+lpm = LPDeviceManager(cm, handlers);
+```
 
 ## Library Methods ##
 
@@ -54,6 +116,16 @@ The imp API [imp.onidle method](https://developer.electricimp.com/api/imp/onidle
 
 Nothing.
 
+#### Example ####
+
+```squirrel
+function onIdleTask() {
+    server.log("Device is idle");
+}
+
+lpm.addOnIdle(onIdleTask.bindenv(this));
+```
+
 ### doAndSleep(*action, sleepTime*) ### 
 
 Synchronously executes the specified action(s) and goes to deep sleep for the specified period of time.
@@ -68,6 +140,27 @@ Synchronously executes the specified action(s) and goes to deep sleep for the sp
 #### Return Value ####
 
 Nothing.
+
+#### Example ####
+
+```squirrel
+const SLEEP_TIME    = 300;
+
+function readTemp() {
+    // Take an async temp reading
+    th.setMode(HTS221_MODE.ONE_SHOT);
+    local res = th.read(); 
+    if ("error" in res) {
+        // Log error
+        server.error("Temperature/Humidity reading error: " + res.error);
+    } else {
+        // Log reading
+        server.log("Temperature: " + res.temperature + "°C Humidity: " + res.humidity + "%");
+    }
+}
+
+lpm.doAndSleep(readTemp.bindenv(this), SLEEP_TIME);
+```
 
 ### doAsyncAndSleep(*action, sleepTime[, timeout]*) ### 
 
@@ -85,6 +178,31 @@ Asynchronously executes the specified action(s) and goes to deep sleep for the s
 
 Nothing.
 
+#### Example ####
+
+```squirrel
+const MAX_WAKE_TIME = 60;
+const SLEEP_TIME    = 300;
+
+function readTemp(done) {
+    // Take an async temp reading
+    th.setMode(HTS221_MODE.ONE_SHOT);
+    th.read(function(res) {
+        if ("error" in res) {
+            // Log error
+            server.error("Temperature/Humidity reading error: " + res.error);
+        } else {
+            // Log reading
+            server.log("Temperature: " + res.temperature + "°C Humidity: " + res.humidity + "%");
+            // Go to sleep
+            done();
+        }
+    }.bindenv(this))
+}
+
+lpm.doAsyncAndSleep(readTemp.bindenv(this), SLEEP_TIME, MAX_WAKE_TIME);
+```
+
 ### sleepFor(*sleepTime*) ### 
 
 Puts the device to sleep for the specified period of time, as soon as it becomes idle.
@@ -99,9 +217,16 @@ Puts the device to sleep for the specified period of time, as soon as it becomes
 
 Nothing.
 
+#### Example ####
+
+```squirrel
+// Put the device to sleep for 60 seconds
+lpm.sleepFor(60);
+```
+
 ### connect() ### 
 
-Attempts to establish a connection between the imp and the server.
+Attempts to establish a connection between the imp and the server. This is the same as calling ConnectionManager's connect method.
 
 #### Parameters ####
 
@@ -110,10 +235,17 @@ None.
 #### Return Value ####
 
 Nothing.
+
+#### Example ####
+
+```squirrel
+// Connect to the server
+lpm.connect();
+```
 
 ### disconnect() ### 
 
-Disconnects the imp from the server and turns the radio off.
+Disconnects the imp from the server and turns the radio off. This is the same as calling ConnectionManager's disconnect method with a parameter of `true`.
 
 #### Parameters ####
 
@@ -122,6 +254,13 @@ None.
 #### Return Value ####
 
 Nothing.
+
+#### Example ####
+
+```squirrel
+// Disconnect from the server
+lpm.disconnect();
+```
 
 ### onConnect(*callback[, callbackName]*) ### 
 
@@ -138,6 +277,15 @@ Registers a callback to be executed on successful connection to the server.
 
 Nothing.
 
+#### Example ####
+
+```squirrel
+// Register a connection handler
+lpm.onConnect(function() {
+    server.log("Connected");
+});
+```
+
 ### onDisconnect(*callback[, callbackName]*) ### 
 
 Registers a callback to be executed when the device disconnects or an error occurs during a connection attempt.
@@ -153,9 +301,22 @@ Registers a callback to be executed when the device disconnects or an error occu
 
 Nothing.
 
+#### Example ####
+
+```squirrel
+// Register a disconnect handler
+lpm.onDisconnect(function(expected) {
+    if (expected) {
+        lpm.sleepFor(60);
+    } else {
+        lpm.connect();
+    }
+});
+```
+
 ### isConnected() ### 
 
-Returns the device's connectivity status.
+Returns the device's connectivity status. This is the same as calling Connection Manager's isConnected method.
 
 #### Parameters ####
 
@@ -164,6 +325,12 @@ None.
 #### Return Value ####
 
 Boolean, `true` if the device is connected and `false` otherwise.
+
+#### Example ####
+
+```squirrel
+if (lpm.isConnected()) server.log("Device is connected");
+```
 
 ### wakeReasonDesc() ### 
 
@@ -177,6 +344,12 @@ None.
 
 String, description of the wake up reason.
 
+#### Example ####
+
+```squirrel
+server.log("Wake reason: " + lpm.wakeReasonDesc());
+```
+
 ## License ##
 
-The Scheduler library is licensed under the [MIT License](./LICENSE).
+This library is licensed under the [MIT License](./LICENSE).
