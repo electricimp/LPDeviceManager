@@ -30,7 +30,7 @@
  * - connect and disconnect events are logged
  */
 
-#require "ConnectionManager.lib.nut:3.1.0"
+#require "ConnectionManager.lib.nut:3.1.1"
 #require "LPDeviceManager.device.lib.nut:0.1.0"
 
 function defaultOnWake(reason) {
@@ -62,7 +62,7 @@ function onInterrupt() {
 cm <- ConnectionManager({
     "blinkupBehavior" : CM_BLINK_ALWAYS
 })
-// return;
+
 lp <- LPDeviceManager(cm, {
     "defaultOnWake" : defaultOnWake,
     "onSwReset"     : onSwReset,

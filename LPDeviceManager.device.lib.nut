@@ -92,7 +92,10 @@ class LPDeviceManager {
      */
     constructor(cm, handlers = {}, isDebug = false) {
         const __RM_CALLBACK_NAME = "lp-callback";
-
+        // Set constants values so we are compatible with older impOS versions
+        const WAKEREASON_SW_RESTART = 10;
+        const WAKEREASON_POWER_RESTORED = 11;
+        
         _cm = cm;
         _onIdleCbs = [];
         _wakeupReason = hardware.wakereason();
