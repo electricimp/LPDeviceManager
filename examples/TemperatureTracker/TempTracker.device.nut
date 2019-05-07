@@ -23,7 +23,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 /**
- * The example implements sceleton of a Tracker application:
+ * The example implements skeleton of a Tracker application for the imp Cellular Breakout Board:
  *
  *
  * 1. Tracker in sleep:
@@ -40,7 +40,7 @@
  */
 
 #require "HTS221.device.lib.nut:2.0.1"
-#require "ConnectionManager.lib.nut:3.1.0"
+#require "ConnectionManager.lib.nut:3.1.1"
 #require "MessageManager.lib.nut:2.3.0"
 #require "LPDeviceManager.device.lib.nut:0.1.0"
 
@@ -86,6 +86,7 @@ class TrackerApp {
 
     function _initHW() {
         _log("Init hardware...");
+        // Cellular Breakout Board sensor i2c
         local i2c = hardware.i2cKL;
         i2c.configure(CLOCK_SPEED_400_KHZ);
         _tempHumid = HTS221(i2c, TEMP_HUM_SENSOR_I2C_ADDR);
