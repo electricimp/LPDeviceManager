@@ -46,7 +46,6 @@ All of the following keys are optional. Their values are callback functions that
 ```squirrel
 // Wake up on timer flow
 function onScheduledWake() {
-    server.log("Device woke according to schedule");
     // Do something
 }
 
@@ -276,7 +275,7 @@ Boolean &mdash; `true` if the device is connected, otherwise `false`.
 #### Example ####
 
 ```squirrel
-server.log("Device is " + (lpm.isConnected() ? "connected" : "disconnected"));
+if (lpm.isConnected()) server.log("Device is connected");
 ```
 
 ### wakeReasonDesc() ###
