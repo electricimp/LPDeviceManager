@@ -104,8 +104,6 @@ Nothing.
 #### Example ####
 
 ```squirrel
-const SLEEP_TIME = 60;
-
 function readTemp() {
     // Take a synchronous sensor reading
     sensor.setMode(HTS221_MODE.ONE_SHOT);
@@ -119,7 +117,7 @@ function readTemp() {
     }
 }
 
-lpm.doAndSleep(readTemp.bindenv(this), SLEEP_TIME);
+lpm.doAndSleep(readTemp.bindenv(this), 60);
 ```
 
 ### doAsyncAndSleep(*action, sleepTime[, timeout]*) ###
@@ -130,9 +128,9 @@ This method asynchronously executes the specified action and then puts the imp i
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *action* | Function | Yes | A function to be called before the imp sleeps. The function has no parameters |
+| *action* | Function | Yes | A function to be called before the imp sleeps. This function takes one parameter, *done*, a function that when called puts the device to sleep |
 | *sleepTime* | Float | Yes | Time in seconds the device should sleep for after the action is fulfilled or timeout occurs |
-| *timeout* | Float | No | Time in seconds the device should wait for the action to complete before sleeping anyway |
+| *timeout* | Float | No | Time in seconds the device should wait for the action to trigger its *done* function before sleeping anyway |
 
 #### Return Value ####
 
@@ -141,10 +139,7 @@ Nothing.
 #### Example ####
 
 ```squirrel
-const MAX_WAKE_TIME = 30;
-const SLEEP_TIME    = 60;
-
-function readTemp() {
+function readTemp(done) {
     // Take an asynchronous sensor reading
     sensor.setMode(HTS221_MODE.ONE_SHOT);
     sensor.read(function(reading) {
@@ -155,10 +150,11 @@ function readTemp() {
             // Log reading
             server.log("Temperature: " + reading.temperature + "°C Humidity: " + reading.humidity + "%");
         }
+        done();
     }.bindenv(this))
 }
 
-lpm.doAsyncAndSleep(readTemp.bindenv(this), SLEEP_TIME, MAX_WAKE_TIME);
+lpm.doAsyncAndSleep(readTemp.bindenv(this), 30, 60);
 ```
 
 ### sleepFor(*sleepTime*) ###
@@ -302,8 +298,8 @@ server.log("Wake reason: " + lpm.wakeReasonDesc());
 #require "HTS221.device.lib.nut:2.0.1"
 #require "LPDeviceManager.device.lib.nut:0.1.0"
 
-const MAX_WAKE_TIME = 30;
-const SLEEP_TIME    = 60;
+const MAX_WAKE_TIME = 60;
+const SLEEP_TIME    = 120;
 const MAX_TEMP      = 20;
 
 // Explorer Kit, sensor i2c
@@ -322,8 +318,9 @@ function takeReading(done) {
             // Didn't get a successful reading, go to sleep
             done();
         } else {
-            // Report temperature above 20°C
+            // Report temperature above max
             if (res.temperature > MAX_TEMP) {
+                // Register connection handler
                 lpm.onConnect(function() {
                     server.log("Wake reason: " + lpm.wakeReasonDesc());
                     // Log reading
@@ -332,6 +329,7 @@ function takeReading(done) {
                     agent.send("reading", res);
                     done();
                 }.bindenv(this))
+                // Try to connect
                 lpm.connect();
             } else {
                 // Temp was in range, go to sleep
