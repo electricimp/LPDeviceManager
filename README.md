@@ -128,7 +128,7 @@ This method asynchronously executes the specified action and then puts the imp i
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *action* | Function | Yes | A function to be called before the imp sleeps. This function has one parameter, *done*, whihc takes a function that when called puts the device to sleep |
+| *action* | Function | Yes | A function to be called before the imp sleeps. This function has one parameter, *done*, which takes a function that when called puts the device to sleep |
 | *sleepTime* | Float | Yes | Time in seconds the device should sleep for after the action is fulfilled or timeout occurs |
 | *timeout* | Float | No | Time in seconds the device should wait for the action to trigger its *done* function before sleeping anyway |
 
