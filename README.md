@@ -128,7 +128,7 @@ This method asynchronously executes the specified action and then puts the imp i
 
 | Parameter | Type | Required? | Description |
 | --- | --- | --- | --- |
-| *action* | Function | Yes | A function to be called before the imp sleeps. This function has one parameter, *done*, which takes a function that when called puts the device to sleep |
+| *action* | Function | Yes | A function to be called before the imp sleeps. The *action* function has one parameter, *done*, which is a function that should be called when the asynchronous action is fulfilled |
 | *sleepTime* | Float | Yes | Time in seconds the device should sleep for after the action is fulfilled or timeout occurs |
 | *timeout* | Float | No | Time in seconds the device should wait for the action to trigger its *done* function before sleeping anyway |
 
@@ -140,8 +140,8 @@ Nothing.
 
 ```squirrel
 function readTemp(done) {
-    // Take an asynchronous sensor reading
     sensor.setMode(HTS221_MODE.ONE_SHOT);
+    // Take an asynchronous sensor reading
     sensor.read(function(reading) {
         if ("error" in reading) {
             // Log error
@@ -150,6 +150,7 @@ function readTemp(done) {
             // Log reading
             server.log("Temperature: " + reading.temperature + "°C Humidity: " + reading.humidity + "%");
         }
+        // Sensor reading is completed, use done function to put the device to sleep
         done();
     }.bindenv(this))
 }
